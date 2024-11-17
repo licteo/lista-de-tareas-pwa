@@ -1,0 +1,303 @@
+<html><head><base href="/" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lista de Tareas</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+  }
+
+  body {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    min-height: 100vh;
+    padding: 20px;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .container {
+    width: 90%;
+    max-width: 600px;
+    margin: 20px auto;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: clamp(15px, 4vw, 25px);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  h1 {
+    text-align: center;
+    color: #fff;
+    margin-bottom: 30px;
+    font-size: clamp(24px, 5vw, 32px);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  }
+
+  .header {
+    display: flex;
+    justify-content: flex-end;
+    gap: clamp(8px, 2vw, 15px);
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: clamp(8px, 2vw, 10px) clamp(15px, 3vw, 20px);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: linear-gradient(45deg, #4a00e0, #8e2de2);
+    color: white;
+    font-size: clamp(12px, 3vw, 14px);
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(74, 0, 224, 0.3);
+    white-space: nowrap;
+  }
+
+  .input-container {
+    display: flex;
+    gap: clamp(8px, 2vw, 15px);
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    min-width: 200px;
+    padding: clamp(10px, 2vw, 12px);
+    border: none;
+    border-radius: 8px;
+    font-size: clamp(14px, 3vw, 16px);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .task-item {
+    display: flex;
+    align-items: center;
+    padding: clamp(10px, 2vw, 15px);
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .task-checkbox {
+    margin-right: clamp(10px, 2vw, 15px);
+    width: clamp(18px, 4vw, 20px);
+    height: clamp(18px, 4vw, 20px);
+    accent-color: #4a00e0;
+  }
+
+  .task-text {
+    flex: 1;
+    color: #fff;
+    font-size: clamp(14px, 3vw, 16px);
+    min-width: 150px;
+    word-break: break-word;
+  }
+
+  .task-actions {
+    display: flex;
+    gap: clamp(8px, 2vw, 15px);
+  }
+
+  .icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .icon-button svg {
+    width: clamp(20px, 4vw, 22px);
+    height: clamp(20px, 4vw, 22px);
+  }
+
+  .subtask {
+    margin-left: clamp(20px, 4vw, 30px);
+    border-left: 2px solid rgba(255, 255, 255, 0.1);
+    padding-left: clamp(10px, 2vw, 15px);
+  }
+
+  @media (max-width: 480px) {
+    .container {
+      padding: 15px;
+    }
+
+    .header {
+      justify-content: center;
+    }
+
+    .input-container {
+      flex-direction: column;
+    }
+
+    .input-container .btn {
+      width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Lista de Tareas</h1>
+    
+    <div class="header">
+      <button class="btn" id="btnAbrir">Abrir</button>
+      <button class="btn" id="btnGuardar">Guardar</button>
+    </div>
+    
+    <div class="input-container">
+      <input type="text" id="newTask" placeholder="Nueva tarea...">
+      <button class="btn" id="btnAdd">Agregar</button>
+    </div>
+
+    <ul class="task-list" id="taskList">
+    </ul>
+  </div>
+
+<script>
+// ... [Previous JavaScript code remains exactly the same] ...
+document.addEventListener('DOMContentLoaded', function() {
+    const newTaskInput = document.getElementById('newTask');
+    const btnAdd = document.getElementById('btnAdd');
+    const taskList = document.getElementById('taskList');
+    const btnGuardar = document.getElementById('btnGuardar');
+    const btnAbrir = document.getElementById('btnAbrir');
+
+    function createTaskElement(taskText, isSubtask = false) {
+        const li = document.createElement('li');
+        li.className = isSubtask ? 'task-item subtask' : 'task-item';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'task-checkbox';
+
+        const span = document.createElement('span');
+        span.className = 'task-text';
+        span.textContent = taskText;
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'task-actions';
+
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'icon-button';
+        deleteButton.innerHTML = `
+            <svg viewBox="0 0 24 24">
+                <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/>
+            </svg>
+        `;
+        deleteButton.onclick = () => {
+            li.style.opacity = '0';
+            li.style.transform = 'translateX(20px)';
+            setTimeout(() => li.remove(), 300);
+        };
+
+        const addButton = document.createElement('button');
+        addButton.className = 'icon-button';
+        addButton.innerHTML = `
+            <svg viewBox="0 0 24 24">
+                <path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/>
+            </svg>
+        `;
+        
+        addButton.onclick = () => {
+            const subtaskText = prompt('Ingrese la subtarea:');
+            if (subtaskText && subtaskText.trim()) {
+                const subtaskElement = createTaskElement(subtaskText.trim(), true);
+                li.insertAdjacentElement('afterend', subtaskElement);
+            }
+        };
+
+        actionsDiv.appendChild(deleteButton);
+        actionsDiv.appendChild(addButton);
+
+        li.appendChild(checkbox);
+        li.appendChild(span);
+        li.appendChild(actionsDiv);
+
+        return li;
+    }
+
+    btnAdd.addEventListener('click', function() {
+        const taskText = newTaskInput.value.trim();
+        if (taskText) {
+            const taskElement = createTaskElement(taskText);
+            taskList.appendChild(taskElement);
+            newTaskInput.value = '';
+        }
+    });
+
+    newTaskInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            btnAdd.click();
+        }
+    });
+
+    btnGuardar.addEventListener('click', function() {
+        const tasks = [];
+        function saveTask(element, isSubtask = false) {
+            return {
+                text: element.querySelector('.task-text').textContent,
+                completed: element.querySelector('.task-checkbox').checked,
+                isSubtask: isSubtask
+            };
+        }
+
+        document.querySelectorAll('.task-item').forEach(taskElement => {
+            if (!taskElement.classList.contains('subtask')) {
+                const task = saveTask(taskElement);
+                tasks.push(task);
+                
+                let nextElement = taskElement.nextElementSibling;
+                while (nextElement && nextElement.classList.contains('subtask')) {
+                    tasks.push(saveTask(nextElement, true));
+                    nextElement = nextElement.nextElementSibling;
+                }
+            }
+        });
+        
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        alert('Tareas guardadas!');
+    });
+
+    btnAbrir.addEventListener('click', function() {
+        const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+        taskList.innerHTML = '';
+        tasks.forEach(task => {
+            const taskElement = createTaskElement(task.text, task.isSubtask);
+            taskElement.querySelector('.task-checkbox').checked = task.completed;
+            taskList.appendChild(taskElement);
+        });
+    });
+
+    btnAbrir.click();
+});
+</script>
+</body>
+</html>

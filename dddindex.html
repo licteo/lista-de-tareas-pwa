@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Lista de Tareas</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+  }
+
+  body {
+    background-color: #f5f5f5;
+    padding: 20px;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #007bff;
+    color: white;
+    font-size: 14px;
+  }
+
+  .btn:hover {
+    background: #0056b3;
+  }
+
+  .input-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+
+  .task-list {
+    list-style: none;
+  }
+
+  .task-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    flex-direction: column;
+  }
+
+  .task-header {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .task-checkbox {
+    margin-right: 12px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .task-text {
+    flex: 1;
+  }
+
+  .task-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  .subtask-list {
+    list-style: none;
+    padding-left: 30px;
+  }
+
+  .icon-button svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .icon-button:hover svg {
+    fill: #007bff;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <button class="btn" id="btnGuardar">Guardar</button>
+      <button class="btn" id="btnAbrir">Abrir</button>
+    </div>
+    
+    <div class="input-container">
+      <input type="text" id="newTask" placeholder="Nueva tarea...">
+      <button class="btn" id="btnAdd">Agregar</button>
+    </div>
+
+    <ul class="task-list" id="taskList"></ul>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const newTaskInput = document.getElementById('newTask');
+  const btnAdd = document.getElementById('btnAdd');
+  const taskList = document.getElementById('taskList');
+  const btnGuardar = document.getElementById('btnGuardar');
+  const btnAbrir = document.getElementById('btnAbrir');
+
+  function createTaskElement(taskText) {
+    const li = document.createElement('li');
+    li.className = 'task-item';
+
+    const taskHeader = document.createElement('div');
+    taskHeader.className = 'task-header';
+    
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'task-checkbox';
+
+    const span = document.createElement('span');
+    span.className = 'task-text';
+    span.textContent = taskText;
+
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'task-actions';
+
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'icon-button';
+    deleteButton.innerHTML = `
+      <svg viewBox="0 0 24 24">
+        <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/>
+      </svg>
+    `;
+    deleteButton.onclick = () => li.remove();
+
+    const addButton = document.createElement('button');
+    addButton.className = 'icon-button';
+    addButton.innerHTML = `
+      <svg viewBox="0 0 24 24">
+        <path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/>
+      </svg>
+    `;
+    addButton.onclick = () => {
+      const subtaskText = prompt("Ingresa la subtarea:");
+      if (subtaskText) {
+        const subtaskElement = document.createElement('li');
+        subtaskElement.textContent = subtaskText;
+        subtaskList.appendChild(subtaskElement);
+      }
+    };
+
+    const subtaskList = document.createElement('ul');
+    subtaskList.className = 'subtask-list';
+
+    actionsDiv.appendChild(deleteButton);
+    actionsDiv.appendChild(addButton);
+
+    taskHeader.appendChild(checkbox);
+    taskHeader.appendChild(span);
+    taskHeader.appendChild(actionsDiv);
+    li.appendChild(taskHeader);
+    li.appendChild(subtaskList);
+
+    return li;
+  }
+
+  btnAdd.addEventListener('click', function() {
+    const taskText = newTaskInput.value.trim();
+    if (taskText) {
+      const taskElement = createTaskElement(taskText);
+      taskList.appendChild(taskElement);
+      newTaskInput.value = '';
+    }
+  });
+
+  btnGuardar.addEventListener('click', function() {
+    const tasks = Array.from(document.querySelectorAll('.task-item')).map(task => {
+      return {
+        text: task.querySelector('.task-text').textContent,
+        completed: task.querySelector('.task-checkbox').checked,
+        subtasks: Array.from(task.querySelectorAll('.subtask-list li')).map(subtask => subtask.textContent)
+      };
+    });
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+  });
+
+  btnAbrir.addEventListener('click', function() {
+    const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+    taskList.innerHTML = '';
+    tasks.forEach(task => {
+      const taskElement = createTaskElement(task.text);
+      taskElement.querySelector('.task-checkbox').checked = task.completed;
+      task.subtasks.forEach(subtask => {
+        const subtaskElement = document.createElement('li');
+        subtaskElement.textContent = subtask;
+        taskElement.querySelector('.subtask-list').appendChild(subtaskElement);
+      });
+      taskList.appendChild(taskElement);
+    });
+  });
+
+  btnAbrir.click();
+});
+</script>
+</body>
+</html>
