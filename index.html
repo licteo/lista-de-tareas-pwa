@@ -18,6 +18,7 @@
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    touch-action: manipulation;
   }
 
   .container {
@@ -100,11 +101,16 @@
     flex-wrap: wrap;
     gap: 10px;
     cursor: grab;
+    touch-action: none;
+    user-select: none;
   }
 
   .task-item.dragging {
     opacity: 0.5;
     cursor: grabbing;
+    background: rgba(74, 0, 224, 0.2);
+    transform: scale(1.02);
+    z-index: 1000;
   }
 
   .task-checkbox {
@@ -172,6 +178,16 @@
     .input-container .btn {
       width: 100%;
     }
+
+    .task-item {
+      touch-action: none;
+    }
+
+    .task-item::before {
+      content: '☰';
+      margin-right: 10px;
+      color: rgba(255, 255, 255, 0.5);
+    }
   }
 </style>
 </head>
@@ -201,6 +217,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnGuardar = document.getElementById('btnGuardar');
     const btnAbrir = document.getElementById('btnAbrir');
 
+    let draggedItem = null;
+    let touchStartY = 0;
+
     function createTaskElement(taskText, isSubtask = false) {
         const li = document.createElement('li');
         li.className = isSubtask ? 'task-item subtask' : 'task-item';
@@ -214,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
         span.className = 'task-text';
         span.textContent = taskText;
 
-        // Double click to edit
+        // Double click/tap to edit
         span.addEventListener('dblclick', function() {
             span.contentEditable = true;
             span.focus();
@@ -283,27 +302,73 @@ document.addEventListener('DOMContentLoaded', function() {
         li.appendChild(span);
         li.appendChild(actionsDiv);
 
-        // Drag and drop functionality
-        li.addEventListener('dragstart', function(e) {
-            li.classList.add('dragging');
-        });
+        // Desktop drag and drop
+        li.addEventListener('dragstart', handleDragStart);
+        li.addEventListener('dragend', handleDragEnd);
 
-        li.addEventListener('dragend', function(e) {
-            li.classList.remove('dragging');
-        });
+        // Mobile touch events
+        li.addEventListener('touchstart', handleTouchStart);
+        li.addEventListener('touchmove', handleTouchMove);
+        li.addEventListener('touchend', handleTouchEnd);
 
         return li;
+    }
+
+    function handleDragStart(e) {
+        draggedItem = this;
+        this.classList.add('dragging');
+    }
+
+    function handleDragEnd(e) {
+        draggedItem = null;
+        this.classList.remove('dragging');
+    }
+
+    function handleTouchStart(e) {
+        draggedItem = this;
+        touchStartY = e.touches[0].clientY;
+        this.classList.add('dragging');
+    }
+
+    function handleTouchMove(e) {
+        if (!draggedItem) return;
+        e.preventDefault();
+
+        const touch = e.touches[0];
+        const moveY = touch.clientY;
+        
+        // Get all items except the currently dragged one
+        const siblings = [...taskList.querySelectorAll('.task-item:not(.dragging)')];
+        
+        // Find the sibling to insert before based on touch position
+        const nextSibling = siblings.find(sibling => {
+            const box = sibling.getBoundingClientRect();
+            return moveY < box.top + box.height / 2;
+        });
+        
+        if (nextSibling) {
+            taskList.insertBefore(draggedItem, nextSibling);
+        } else {
+            taskList.appendChild(draggedItem);
+        }
+    }
+
+    function handleTouchEnd() {
+        if (draggedItem) {
+            draggedItem.classList.remove('dragging');
+            draggedItem = null;
+        }
     }
 
     taskList.addEventListener('dragover', function(e) {
         e.preventDefault();
         const draggingItem = document.querySelector('.dragging');
-        const siblings = [...taskList.querySelectorAll('.task-item:not(.dragging)')];
+        if (!draggingItem) return;
         
+        const siblings = [...taskList.querySelectorAll('.task-item:not(.dragging)')];
         const nextSibling = siblings.find(sibling => {
             const box = sibling.getBoundingClientRect();
-            const offset = e.clientY - box.top - box.height / 2;
-            return offset < 0;
+            return e.clientY < box.top + box.height / 2;
         });
         
         if (nextSibling) {
