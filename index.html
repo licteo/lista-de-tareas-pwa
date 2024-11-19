@@ -99,6 +99,12 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     flex-wrap: wrap;
     gap: 10px;
+    cursor: grab;
+  }
+
+  .task-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
   }
 
   .task-checkbox {
@@ -114,6 +120,12 @@
     font-size: clamp(14px, 3vw, 16px);
     min-width: 150px;
     word-break: break-word;
+  }
+
+  .task-text[contenteditable="true"] {
+    border-bottom: 2px solid #4a00e0;
+    padding: 2px;
+    outline: none;
   }
 
   .task-actions {
@@ -182,7 +194,6 @@
   </div>
 
 <script>
-// ... [Previous JavaScript code remains exactly the same] ...
 document.addEventListener('DOMContentLoaded', function() {
     const newTaskInput = document.getElementById('newTask');
     const btnAdd = document.getElementById('btnAdd');
@@ -193,6 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function createTaskElement(taskText, isSubtask = false) {
         const li = document.createElement('li');
         li.className = isSubtask ? 'task-item subtask' : 'task-item';
+        li.draggable = true;
         
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
@@ -202,8 +214,37 @@ document.addEventListener('DOMContentLoaded', function() {
         span.className = 'task-text';
         span.textContent = taskText;
 
+        // Double click to edit
+        span.addEventListener('dblclick', function() {
+            span.contentEditable = true;
+            span.focus();
+        });
+
+        span.addEventListener('blur', function() {
+            span.contentEditable = false;
+        });
+
+        span.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                span.contentEditable = false;
+            }
+        });
+
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'task-actions';
+
+        const editButton = document.createElement('button');
+        editButton.className = 'icon-button';
+        editButton.innerHTML = `
+            <svg viewBox="0 0 24 24">
+                <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/>
+            </svg>
+        `;
+        editButton.onclick = () => {
+            span.contentEditable = true;
+            span.focus();
+        };
 
         const deleteButton = document.createElement('button');
         deleteButton.className = 'icon-button';
@@ -234,6 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
 
+        actionsDiv.appendChild(editButton);
         actionsDiv.appendChild(deleteButton);
         actionsDiv.appendChild(addButton);
 
@@ -241,8 +283,35 @@ document.addEventListener('DOMContentLoaded', function() {
         li.appendChild(span);
         li.appendChild(actionsDiv);
 
+        // Drag and drop functionality
+        li.addEventListener('dragstart', function(e) {
+            li.classList.add('dragging');
+        });
+
+        li.addEventListener('dragend', function(e) {
+            li.classList.remove('dragging');
+        });
+
         return li;
     }
+
+    taskList.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        const draggingItem = document.querySelector('.dragging');
+        const siblings = [...taskList.querySelectorAll('.task-item:not(.dragging)')];
+        
+        const nextSibling = siblings.find(sibling => {
+            const box = sibling.getBoundingClientRect();
+            const offset = e.clientY - box.top - box.height / 2;
+            return offset < 0;
+        });
+        
+        if (nextSibling) {
+            taskList.insertBefore(draggingItem, nextSibling);
+        } else {
+            taskList.appendChild(draggingItem);
+        }
+    });
 
     btnAdd.addEventListener('click', function() {
         const taskText = newTaskInput.value.trim();
@@ -299,23 +368,5 @@ document.addEventListener('DOMContentLoaded', function() {
     btnAbrir.click();
 });
 </script>
-
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js')
-        .then(registration => {
-          console.log('Service Worker registrado con éxito:', registration);
-        })
-        .catch(error => {
-          console.log('Error al registrar el Service Worker:', error);
-        });
-    });
-  }
-</script>
-
-<link rel="manifest" href="manifest.json">
-
-
 </body>
 </html>
